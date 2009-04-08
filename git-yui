@@ -1,3 +1,78 @@
 #!/usr/bin/env python
 
-print "Nothing here yet.."
+import os, sys, string
+from cStringIO import StringIO
+import urllib2, urllib, pprint
+from subprocess import call
+
+pp = pprint.PrettyPrinter(indent=4)
+
+
+args = []
+count = 0
+origin = None
+git_config = {}
+action = None
+
+for arg in sys.argv:
+    if count > 0:
+        if not action:
+            action = arg
+        args.append(arg)
+
+    count = count + 1
+
+#pp.pprint(args)
+
+def print_error(str):
+    print "\033[1m\033[31m *%s*\033[0m" % str
+    sys.exit(1)
+
+def fetchGitConfig():
+    raw_config = os.popen('git config --list').read().split("\n")
+    for i in raw_config:
+        line = i.split('=')
+        if line[0]:
+            git_config[line[0]] = line[1]
+
+def fetchProject():
+    if 'remote.origin.url' in git_config:
+        org_remote = git_config['remote.origin.url'].replace('git@github.com:', '')
+        remote = org_remote.replace('git://github.com/', '')
+        remote = remote.replace('http://github.com:', '')
+        remote = remote.replace('.git', '')
+        remote = remote.split('/')
+        if not remote[1]:
+            print_error('Remote not found: %s' % org_remote)
+        return remote[1]
+    else:
+        print_error('No remote origin found, are we in a git repo?')
+
+def syncUpstream(master, user=None):
+    if not user:
+        user = 'yui'
+    print "\033[1mSyncing with the upstream master:\033[0m %s/%s" % (user, master)
+    f_name = '%s_%s' % (user, master)
+    remote_name = 'remote.%s.url' % f_name
+
+    if not remote_name in git_config:
+        call(['git', 'remote', 'add', f_name, 'git://github.com/%s/%s.git' % (user, master)])
+
+    call(['git', 'fetch', 'origin', '-v'])
+    call(['git', 'fetch', f_name, '-v'])
+    call(['git', 'merge', '%s/master' % f_name])
+
+
+
+fetchGitConfig()
+origin = fetchProject()
+
+
+
+if action == 'sync':
+    user = None
+    if count > 2:
+        user = args[1]
+    syncUpstream(origin, user)
+else:
+    print "Print Help"
