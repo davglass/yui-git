@@ -1,0 +1,13 @@
+h1. YUI Git
+
+This is an attempt at making a: @git yui@ command line tool for use when contributing to YUI.
+
+h2. TODO
+
+* Sync Source
+* Add a Ticket
+* Commit/Comment on a ticket
+* Submit a Pull Request
+* Create Build Files
+* Build Components
+* Build all Sources
