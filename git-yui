@@ -30,9 +30,14 @@ for arg in sys.argv:
     count = count + 1
 
 #pp.pprint(args)
+def bold(str):
+    return "\033[1m%s\033[0m" % str
+
+def red(str):
+    return "\033[31m%s\033[0m" % str
 
 def print_error(str):
-    print "\033[1m\033[31m *%s*\033[0m" % str
+    print  bold(red(str))
     sys.exit(1)
 
 def fetchGitConfig():
@@ -62,7 +67,7 @@ def fetchProject():
 def fetchUpstream(master, user=None):
     if not user:
         user = 'yui'
-    print "\033[1mSyncing with the upstream master:\033[0m %s/%s" % (user, master)
+    print "%s %s/%s" % (bold("Syncing with the upstream master:"), user, master)
     f_name = '%s_%s' % (user, master)
     remote_name = 'remote.%s.url' % f_name
 
@@ -97,7 +102,7 @@ def fetchUpstream(master, user=None):
 def mergeUpstream(master, user):
     if not user:
         user = 'yui'
-    print "\033[1mMerging into master:\033[0m %s/%s" % (user, master)
+    print "%s %s/%s" % (bold("Merging into master:"), user, master)
     f_name = '%s_%s' % (user, master)
 
     retcode = call(['git', 'checkout', 'master'])
@@ -133,9 +138,9 @@ def buildFromSource(item):
     src_path = os.path.abspath(os.path.join(git_dir, 'src/%s' % item))
     os.chdir(src_path)
 
-    print "\033[1mBuilding source in: %s.\033[0m" % item
+    print bold("Building source in: %s." % item)
     call(['ant', '-q', 'all'], stderr=PIPE, stdout=PIPE)
-    print "\033[1mSource for %s has been built.\033[0m" % item
+    print bold("Source for %s has been built." % item)
 
 def buildAllFromSource():
     print "Building all from source.."
@@ -152,7 +157,6 @@ def buildControl(item):
         buildAllFromSource()
     else:
         buildFromSource(item)
-
 
 fetchGitConfig()
 origin = fetchProject()
@@ -183,23 +187,22 @@ elif action == 'build':
         print_error('You must provide a component name')
     
 else:
-    print "\033[1mThis helper app will help you develop and contribute to YUI.\033[0m"
+    print bold("This helper app will help you develop and contribute to YUI.")
     print " Usage: git yui <action>"
-    print "     \033[1mgit yui up\033[0m"
+    print bold("     git yui up")
     print "         This will pull the latest changes from yui HEAD into a branch called yui_<project>"
     print ""
-    print "     \033[1mgit yui up <github username>\033[0m"
+    print bold("     git yui up <github username>")
     print "         This will pull the latest changes from <username> HEAD into a branch called <username>_<project>"
     print ""
-    print "     \033[1mgit yui merge\033[0m"
+    print bold("     git yui merge")
     print "         This will merge the yui_<project> branch back into the master branch"
     print ""
-    print "     \033[1mgit yui merge <github username>\033[0m"
+    print bold("     git yui merge <github username>")
     print "         This will merge the <username>_<project> branch back into the master branch"
     print ""
-    print "     \033[1mgit yui build <control>\033[0m"
-    print "         \033[1mgit yui build dd\033[0m"
+    print bold("     git yui build <control>")
+    print bold("         git yui build dd")
     print "         This will run the ant processes needed to build the control"
-
-    print "         \033[1mgit yui build all\033[0m"
+    print bold("         git yui build all")
     print "         This will run the build on all dir's in src."
