@@ -19,6 +19,7 @@ count = 0
 origin = None
 git_config = {}
 action = None
+git_dir = None
 
 for arg in sys.argv:
     if count > 0:
@@ -104,6 +105,54 @@ def mergeUpstream(master, user):
         retcode = call(['git', 'merge', f_name])
         
 
+def checkAnt():
+    try:
+        call(['ant', '-version'], stdout=PIPE)
+    except OSError:
+        print_error('Ant was not found, please install it: http://ant.apache.org/')
+    
+    return True
+
+
+def findGitRoot():
+    dir = os.path.abspath('.')
+    check = os.path.join(dir, '.git')
+    if os.path.exists(check):
+        tmp_git_dir = check
+
+    while not tmp_git_dir:
+        dir = os.path.abspath('../')
+        check = os.path.join(dir, '.git')
+        if os.path.exists(check):
+            tmp_git_dir = check
+    
+    globals()["git_dir"] = os.path.abspath(os.path.join(tmp_git_dir, '../'))
+    
+
+def buildFromSource(item):
+    src_path = os.path.abspath(os.path.join(git_dir, 'src/%s' % item))
+    os.chdir(src_path)
+
+    print "\033[1mBuilding source in: %s.\033[0m" % item
+    call(['ant', '-q', 'all'], stderr=PIPE, stdout=PIPE)
+    print "\033[1mSource for %s has been built.\033[0m" % item
+
+def buildAllFromSource():
+    print "Building all from source.."
+    print_error('This doesn\'t work yet, all build files are not OS agnostic.')
+
+def buildControl(item):
+    checkAnt()
+    findGitRoot()
+    build_dir = os.path.abspath(os.path.join(git_dir, '../builder'))
+    if not os.path.exists(build_dir):
+        print_error('Builder module was not found. Please install it: http://github.com/yui/builder')
+    
+    if item == 'all':
+        buildAllFromSource()
+    else:
+        buildFromSource(item)
+
 
 fetchGitConfig()
 origin = fetchProject()
@@ -127,6 +176,12 @@ elif action == 'merge':
     if count > 2:
         user = args[1]
     mergeUpstream(origin, user)
+elif action == 'build':
+    if count > 2:
+        buildControl(args[1])
+    else:
+        print_error('You must provide a component name')
+    
 else:
     print "\033[1mThis helper app will help you develop and contribute to YUI.\033[0m"
     print " Usage: git yui <action>"

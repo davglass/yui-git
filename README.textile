@@ -14,7 +14,7 @@ h2. TODO (in order of importance)
 
 * Sync Sources (working)
 * Fetch/Merge another users repo (working)
-* Build a Component
+* Build a Component (partially working)
 * Build all Component Sources
 * Submit a Pull Request
 * Create Build Files
