@@ -196,3 +196,10 @@ else:
     print ""
     print "     \033[1mgit yui merge <github username>\033[0m"
     print "         This will merge the <username>_<project> branch back into the master branch"
+    print ""
+    print "     \033[1mgit yui build <control>\033[0m"
+    print "         \033[1mgit yui build dd\033[0m"
+    print "         This will run the ant processes needed to build the control"
+
+    print "         \033[1mgit yui build all\033[0m"
+    print "         This will run the build on all dir's in src."
