@@ -111,6 +111,7 @@ def mergeUpstream(master, user):
         
 
 def checkAnt():
+    findGitRoot()
     try:
         call(['ant', '-version'], stdout=PIPE)
     except OSError:
@@ -120,13 +121,17 @@ def checkAnt():
 
 
 def findGitRoot():
+    if globals()["git_dir"] != '':
+        return globals()["git_dir"]
+
     dir = os.path.abspath('.')
     check = os.path.join(dir, '.git')
+    tmp_git_dir = None
     if os.path.exists(check):
         tmp_git_dir = check
 
     while not tmp_git_dir:
-        dir = os.path.abspath('../')
+        dir = os.path.abspath(os.path.join(dir, '../'))
         check = os.path.join(dir, '.git')
         if os.path.exists(check):
             tmp_git_dir = check
@@ -138,21 +143,53 @@ def buildFromSource(item):
     src_path = os.path.abspath(os.path.join(git_dir, 'src/%s' % item))
     os.chdir(src_path)
 
-    print bold("Building source in: %s." % item)
-    call(['ant', '-q', 'all'], stderr=PIPE, stdout=PIPE)
-    print bold("Source for %s has been built." % item)
+    print bold("Building source in: %s." % red(item))
+    #TODO - Once Matt fixes his build environment, this can be removed..
+    if os.path.isfile(os.path.join('', 'build.sh')):
+        print bold(red('Control skipped (%s): found a build.sh file' % item))
+    else:
+        if os.path.isfile(os.path.join('', 'build.xml')):
+            call(['ant', '-q', 'all'], stderr=PIPE, stdout=PIPE)
+            print bold("Source for %s has been built." % item)
+        else:
+            print bold(red("No build.xml file found.."))
+
 
 def buildAllFromSource():
-    print "Building all from source.."
-    print_error('This doesn\'t work yet, all build files are not OS agnostic.')
+    print bold("Building all from source..")
+    src_path = os.path.abspath(os.path.join(git_dir, 'src/'))
+    os.chdir(src_path)
+    print src_path
+    subdirs = []    
+    for i in os.listdir(src_path):
+        # Checking for directories that start with a '.'
+        # Windows doesn't hide these directories by default
+        if not i.startswith('.'):
+            # Checking for known bad directory: CVS
+            if i != 'CVS':
+                fullname = os.path.join(src_path, i)
+                if os.path.isdir(fullname):
+                    subdirs.append(i)
+                
+    for i in subdirs:
+        buildFromSource(i)
 
-def buildControl(item):
-    checkAnt()
+def checkBuilder():
     findGitRoot()
     build_dir = os.path.abspath(os.path.join(git_dir, '../builder'))
     if not os.path.exists(build_dir):
         print_error('Builder module was not found. Please install it: http://github.com/yui/builder')
     
+def checkYUIDoc():
+    findGitRoot()
+    yuidoc_dir = os.path.abspath(os.path.join(git_dir, '../yuidoc'))
+    if not os.path.exists(yuidoc_dir):
+        print_error('YUIDoc module was not found. Please install it: http://github.com/yui/yuidoc')
+    
+def buildControl(item):
+    checkAnt()
+    checkBuilder()
+
     if item == 'all':
         buildAllFromSource()
     else:
