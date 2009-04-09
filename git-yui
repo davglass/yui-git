@@ -3,10 +3,16 @@
 import os, sys, string
 from cStringIO import StringIO
 import urllib2, urllib, pprint
-from subprocess import call
+from subprocess import call, check_call, CalledProcessError, PIPE
 
 pp = pprint.PrettyPrinter(indent=4)
 
+supported_projects = [
+    'yui2',
+    'yui3',
+    'yuidoc',
+    'builder'
+]
 
 args = []
 count = 0
@@ -44,11 +50,15 @@ def fetchProject():
         remote = remote.split('/')
         if not remote[1]:
             print_error('Remote not found: %s' % org_remote)
+
+        if remote[1] not in supported_projects:
+            print_error('Remote (%s) not in supported projects list: %s' % (remote[1], ",".join(supported_projects)))
+            
         return remote[1]
     else:
         print_error('No remote origin found, are we in a git repo?')
 
-def syncUpstream(master, user=None):
+def fetchUpstream(master, user=None):
     if not user:
         user = 'yui'
     print "\033[1mSyncing with the upstream master:\033[0m %s/%s" % (user, master)
@@ -57,11 +67,42 @@ def syncUpstream(master, user=None):
 
     if not remote_name in git_config:
         call(['git', 'remote', 'add', f_name, 'git://github.com/%s/%s.git' % (user, master)])
+    
+    use_branch = True
+    if 'yui.usebranch' in git_config:
+        if git_config['yui.usebranch'] == 'false':
+            use_branch = False
 
-    call(['git', 'fetch', 'origin', '-v'])
-    call(['git', 'fetch', f_name, '-v'])
-    call(['git', 'merge', '%s/master' % f_name])
+    if use_branch:
+        retcode = call(['git', 'checkout', '-b', f_name], stderr=PIPE)
+        if retcode == 128:
+            retcode = call(['git', 'checkout', f_name])
+    else:
+        retcode = call(['git', 'checkout', 'master'])
+            
+        
+    if retcode == 0:
+        retcode = call(['git', 'fetch', 'origin', '-v'])
+        if retcode == 0:
+            retcode = call(['git', 'fetch', f_name, '-v'])
+            if retcode == 0:
+                retcode = call(['git', 'merge', '%s/master' % f_name])
+            else:
+                call(['git', 'checkout', 'master'])
+                call(['git', 'branch', '-d', f_name])
+                print_error('Bad username given, branch %s deleted' % f_name)
 
+
+def mergeUpstream(master, user):
+    if not user:
+        user = 'yui'
+    print "\033[1mMerging into master:\033[0m %s/%s" % (user, master)
+    f_name = '%s_%s' % (user, master)
+
+    retcode = call(['git', 'checkout', 'master'])
+    if retcode == 0:
+        retcode = call(['git', 'merge', f_name])
+        
 
 
 fetchGitConfig()
@@ -69,10 +110,34 @@ origin = fetchProject()
 
 
 
-if action == 'sync':
+if action == 'up':
     user = None
     if count > 2:
         user = args[1]
-    syncUpstream(origin, user)
+    fetchUpstream(origin, user)
+elif action == 'merge':
+    use_branch = True
+    if 'yui.usebranch' in git_config:
+        if git_config['yui.usebranch'] == 'false':
+            use_branch = False
+    
+    if not use_branch:
+        print_error('usebranch is false in config, this will do nothing.')
+    user = None
+    if count > 2:
+        user = args[1]
+    mergeUpstream(origin, user)
 else:
-    print "Print Help"
+    print "\033[1mThis helper app will help you develop and contribute to YUI.\033[0m"
+    print " Usage: git yui <action>"
+    print "     \033[1mgit yui up\033[0m"
+    print "         This will pull the latest changes from yui HEAD into a branch called yui_<project>"
+    print ""
+    print "     \033[1mgit yui up <github username>\033[0m"
+    print "         This will pull the latest changes from <username> HEAD into a branch called <username>_<project>"
+    print ""
+    print "     \033[1mgit yui merge\033[0m"
+    print "         This will merge the yui_<project> branch back into the master branch"
+    print ""
+    print "     \033[1mgit yui merge <github username>\033[0m"
+    print "         This will merge the <username>_<project> branch back into the master branch"

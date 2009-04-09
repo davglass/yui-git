@@ -2,13 +2,21 @@ h1. YUI Git
 
 This is an attempt at making a: @git yui@ command line tool for use when contributing to YUI.
 
-h2. TODO
 
-* Sync Source
-* Add a Ticket
-* Commit/Comment on a ticket
+h2. Installation
+
+You must have python installed on your machine before this will work.
+To install, clone the project. Then place the @git-yui@ file in your path somewhere.
+
+That should do it. Eventually, I'll make a Makefile for it :)
+
+h2. TODO (in order of importance)
+
+* Sync Sources (working)
+* Fetch/Merge another users repo (working)
+* Build a Component
+* Build all Component Sources
 * Submit a Pull Request
 * Create Build Files
-* Build Components
-* Build all Sources
-* Fetch/Merge another users repo
+* Add a Ticket
+* Commit/Comment on a ticket
