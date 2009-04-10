@@ -8,15 +8,15 @@ h2. Installation
 You must have python installed on your machine before this will work.
 To install, clone the project. Then place the @git-yui@ file in your path somewhere.
 
-That should do it. Eventually, I'll make a Makefile for it :)
+That should do it. Eventually, I'll build a Makefile for it :)
 
-h2. TODO (in order of importance)
+h3. TODO (in order of importance)
 
 * Sync Sources (working)
 * Fetch/Merge another users repo (working)
-* Build a Component[1]
-* Build all Component Sources[1]
-* Generate API Docs[2]
+* Build a Component from Source (working)[1]
+* Build all Component Sources (working)[1]
+* Generate API Docs (working)[2]
 * Run JSLint on a file
 * Submit a Pull Request
 * Create Build Files
@@ -25,5 +25,5 @@ h2. TODO (in order of importance)
 
 fn1. Partially working, waiting on developers to standardize build files
 
-fn2. Partially working, all docs currently errors.
+fn2. Partially working, all docs currently throws an error (one of the files in src is bad.).
 
