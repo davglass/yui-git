@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
-import os, sys, string
+import os, sys, string, shutil, urllib2, urllib, pprint
 from cStringIO import StringIO
-import urllib2, urllib, pprint
-from subprocess import call, check_call, CalledProcessError, PIPE
+from subprocess import call, CalledProcessError, PIPE
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -21,6 +20,7 @@ git_config = {}
 action = None
 git_dir = None
 
+
 for arg in sys.argv:
     if count > 0:
         if not action:
@@ -29,7 +29,7 @@ for arg in sys.argv:
 
     count = count + 1
 
-#pp.pprint(args)
+
 def bold(str):
     return "\033[1m%s\033[0m" % str
 
@@ -80,7 +80,7 @@ def fetchUpstream(master, user=None):
             use_branch = False
 
     if use_branch:
-        retcode = call(['git', 'checkout', '-b', f_name], stderr=PIPE)
+        retcode = call(['git', 'checkout', '-b', f_name], stderr=error_file)
         if retcode == 128:
             retcode = call(['git', 'checkout', f_name])
     else:
@@ -111,7 +111,6 @@ def mergeUpstream(master, user):
         
 
 def checkAnt():
-    findGitRoot()
     try:
         call(['ant', '-version'], stdout=PIPE)
     except OSError:
@@ -121,7 +120,7 @@ def checkAnt():
 
 
 def findGitRoot():
-    if globals()["git_dir"] != '':
+    if globals()["git_dir"]:
         return globals()["git_dir"]
 
     dir = os.path.abspath('.')
@@ -137,10 +136,24 @@ def findGitRoot():
             tmp_git_dir = check
     
     globals()["git_dir"] = os.path.abspath(os.path.join(tmp_git_dir, '../'))
+
+    error_file_path = os.path.abspath(os.path.join(tmp_git_dir, 'yuilog'))
+    if os.path.exists(error_file_path):
+        os.rename(
+            os.path.abspath(error_file_path), 
+            os.path.abspath(os.path.join(tmp_git_dir, 'yuilog.last'))
+        )
+        globals()["error_file_path_last"] = os.path.abspath(os.path.join(tmp_git_dir, 'yuilog.last'))
+        
+    globals()["error_file_path"] = error_file_path
+    globals()["error_file"] = open(error_file_path, 'w+')
     
 
 def buildFromSource(item):
     src_path = os.path.abspath(os.path.join(git_dir, 'src/%s' % item))
+    if not os.path.exists(src_path):
+        print_error("Source Directory Not Found: \n%s" % src_path)
+
     os.chdir(src_path)
 
     print bold("Building source in: %s." % red(item))
@@ -149,17 +162,15 @@ def buildFromSource(item):
         print bold(red('Control skipped (%s): found a build.sh file' % item))
     else:
         if os.path.isfile(os.path.join('', 'build.xml')):
-            call(['ant', '-q', 'all'], stderr=PIPE, stdout=PIPE)
+            call(['ant', '-q', 'all'], stderr=error_file, stdout=error_file)
             print bold("Source for %s has been built." % item)
         else:
             print bold(red("No build.xml file found.."))
 
 
-def buildAllFromSource():
-    print bold("Building all from source..")
+def getSrcDirs():
     src_path = os.path.abspath(os.path.join(git_dir, 'src/'))
     os.chdir(src_path)
-    print src_path
     subdirs = []    
     for i in os.listdir(src_path):
         # Checking for directories that start with a '.'
@@ -170,21 +181,26 @@ def buildAllFromSource():
                 fullname = os.path.join(src_path, i)
                 if os.path.isdir(fullname):
                     subdirs.append(i)
-                
+    
+    return subdirs
+
+def buildAllFromSource():
+    print bold("Building all from source..")
+    subdirs = getSrcDirs()
     for i in subdirs:
         buildFromSource(i)
 
 def checkBuilder():
-    findGitRoot()
     build_dir = os.path.abspath(os.path.join(git_dir, '../builder'))
     if not os.path.exists(build_dir):
         print_error('Builder module was not found. Please install it: http://github.com/yui/builder')
     
 def checkYUIDoc():
-    findGitRoot()
     yuidoc_dir = os.path.abspath(os.path.join(git_dir, '../yuidoc'))
     if not os.path.exists(yuidoc_dir):
         print_error('YUIDoc module was not found. Please install it: http://github.com/yui/yuidoc')
+
+    globals()['doc_dir'] = os.path.abspath(os.path.join(yuidoc_dir, 'bin'))
     
 def buildControl(item):
     checkAnt()
@@ -195,11 +211,86 @@ def buildControl(item):
     else:
         buildFromSource(item)
 
+def genDocs(items):
+    prepDocParse()
+    paths = []
+    
+    for i in items:
+        src_path = os.path.abspath(os.path.join(git_dir, 'src/%s/js' % i))
+        if os.path.exists(src_path):
+            paths.append(src_path)
+
+
+    print bold('Generating docs...')
+    ver = origin.replace('yui', '')
+    args = [os.path.join(doc_dir, 'yuidoc.py')]
+    args2 = ['-p', os.path.join(doc_base_path, 'parser'),
+        '-o', os.path.join(doc_base_path, 'html'),
+        '-t', os.path.abspath(os.path.join(doc_dir, '../', 'template')),
+        '-v', '1.0.0',
+        '-Y', ver]
+    ##Put all the pieces together
+    for i in paths:
+        args.append(i)
+    for i in args2:
+        args.append(i)
+
+    retcode = call(args, stderr=error_file, stdout=error_file)
+    if retcode > 0:
+        print_error('Docs failed to parse. Call "git yui log" to see the error')
+    print bold('Docs generated')
+
+
+def genAllDocs():
+    print bold('Generating all docs')
+    subdirs = getSrcDirs()
+    genDocs(subdirs)
+
+def prepDocParse():
+    src_path = os.path.abspath(os.path.join(git_dir, '../yui-docs'))
+    if not os.path.exists(src_path):
+        globals()['doc_base_path'] = src_path
+        os.mkdir(os.path.abspath(src_path))
+        os.mkdir(os.path.abspath(os.path.join(src_path, 'html')))
+        os.mkdir(os.path.abspath(os.path.join(src_path, 'parser')))
+    else:
+        print_error('Docs directory exists. Please run: git yui doc clean')
+
+def clearDocs():
+    src_path = os.path.abspath(os.path.join(git_dir, '../yui-docs'))
+    if os.path.exists(src_path):
+        shutil.rmtree(src_path, ignore_errors=True) 
+        print bold("Old docs directory removed.")
+    else:
+        print bold("No directory to clean")
+       
+    
+
+
+def buildDocs(item):
+    checkYUIDoc()
+
+    if item[0] == 'all':
+        genAllDocs()
+    elif item[0] == 'clean':
+        clearDocs()
+    else:
+        genDocs(item)
+
+def showLog():
+    f = open(error_file_path_last)
+    print f.read()
+    
+
+########ACTION CODE STARTS HERE
+
 fetchGitConfig()
+findGitRoot()
 origin = fetchProject()
 
 
-
+##Process the arguments.. Maybe a better way?
+##Don't want to use OptionParser, don't want to require the use of - arguments
 if action == 'up':
     user = None
     if count > 2:
@@ -222,7 +313,17 @@ elif action == 'build':
         buildControl(args[1])
     else:
         print_error('You must provide a component name')
-    
+elif action == 'docs' or action == 'doc':
+    if count > 2:
+        items = []
+        for k,v in enumerate(args):
+            if k > 0:
+                items.append(v)
+        buildDocs(items)
+    else:
+        print_error('You must provide at least one component name')
+elif action == 'log':
+    showLog()
 else:
     print bold("This helper app will help you develop and contribute to YUI.")
     print " Usage: git yui <action>"
@@ -241,5 +342,17 @@ else:
     print bold("     git yui build <control>")
     print bold("         git yui build dd")
     print "         This will run the ant processes needed to build the control"
+    print ""
     print bold("         git yui build all")
     print "         This will run the build on all dir's in src."
+    print ""
+    print bold("     git yui docs <control1> <control2>")
+    print bold("         git yui docs dd")
+    print bold("         git yui docs dd anim node yui")
+    print "         Build the API docs for the specified modules"
+    print ""
+    print bold("         git yui docs all")
+    print "         Build the API docs for all modules"
+    print ""
+    print bold("     git yui log")
+    print "         Show the error (stderr) output of the last command."
