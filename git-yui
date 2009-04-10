@@ -367,6 +367,7 @@ def showCommits(num):
     ]
     call(args)
 
+##Issue a Pull Request to yui on GitHub
 def pullRequest(commitid):
     print "%s %s" % (bold('Sending YUI a Pull Request for: '), commitid[0:8])
     
