@@ -368,7 +368,7 @@ def showCommits(num):
     call(args)
 
 def pullRequest(commitid):
-    print "%s %s" % (bold('Sending YUI a Pull Request for: '), commitid)
+    print "%s %s" % (bold('Sending YUI a Pull Request for: '), commitid[0:8])
     
     try:
         username = git_config['github.user']
@@ -379,22 +379,34 @@ def pullRequest(commitid):
     out = {}
     out['login'] = username
     out['token'] = token
-    out['message[body]'] = 'Dynamic Pull Request from git-yui for: %s' % username
     out['message[to][]'] = ''
-    out['message[to][]'] = 'yui'
+    out['message[to][]'] = 'davglass'
 
-    pp.pprint(out)
+    print bold('Please add a (one line) comment to this request:')
 
-    url = "http://github.com/%s/%s/pull_request/%s" % (username, origin, commitid)
-    data = urllib.urlencode(out)
-    req = urllib2.Request(url, data)
-    response = urllib2.urlopen(req)
-    
-    url = response.geturl()
-    info = response.info()
-    
-    ##There seems to be no way to tell if it was successful or not
-    print bold('Pull Request sent')
+    comment = sys.stdin.readline().strip()
+    if not comment:
+        print bold(red('You must add a comment to the request.'))
+        comment = sys.stdin.readline().strip()
+        if not comment:
+            print_error('No comment given, Pull Request failed.')
+
+    out['message[body]'] = comment
+
+    print bold('Are you sure you wish to make a Pull Request for %s/%s? [Y/n]' % (origin, commitid[0:8]))
+    go = sys.stdin.readline().strip().lower()
+
+    if go[0:1] == 'y':
+        print bold('Sending Pull Request to GitHub')
+        url = "http://github.com/%s/%s/pull_request/%s" % (username, origin, commitid)
+        data = urllib.urlencode(out)
+        req = urllib2.Request(url, data)
+        response = urllib2.urlopen(req)
+        
+        ##There seems to be no way to tell if it was successful or not
+        print bold('Pull Request sent')
+    else:
+        print_error('Pull Request cancelled')
     
 
 
