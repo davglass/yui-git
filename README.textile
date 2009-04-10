@@ -14,9 +14,9 @@ h3. TODO (in order of importance)
 
 * Sync Sources (working)
 * Fetch/Merge another users repo (working)
-* Build a Component from Source (working)[1]
-* Build all Component Sources (working)[1]
-* Generate API Docs (working)[2]
+* Build a Component from Source (working[1])
+* Build all Component Sources (working[1])
+* Generate API Docs (working[2])
 * Run JSLint on a file
 * Submit a Pull Request
 * Create Build Files
