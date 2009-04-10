@@ -495,23 +495,23 @@ elif action == 'lint':
 else:
     ##Print Help
     print bold("This helper app will help you develop and contribute to YUI.")
-    print " Usage: git yui <action>"
+    print " Usage: git yui [action]"
     print bold("     git yui up")
-    print "         Pull the latest changes from yui HEAD into a branch called yui_<project>"
+    print "         Pull the latest changes from yui HEAD into a branch called yui_[project]"
     print ""
-    print bold("     git yui up <github username>")
-    print "         Pull the latest changes from <username> HEAD into a branch called <username>_<project>"
+    print bold("     git yui up [github username]")
+    print "         Pull the latest changes from [username] HEAD into a branch called [username]_[project]"
     print ""
     print bold("     git yui merge")
-    print "         Merge the yui_<project> branch back into the master branch"
+    print "         Merge the yui_[project] branch back into the master branch"
     print ""
-    print bold("     git yui merge <github username>")
-    print "         Merge the <username>_<project> branch back into the master branch"
+    print bold("     git yui merge [github username]")
+    print "         Merge the [username]_[project] branch back into the master branch"
     print ""
-    print bold("     git yui sync <github username>")
+    print bold("     git yui sync [github username]")
     print "         Runs git yui up, then git yui merge"
     print ""
-    print bold("     git yui build <control>")
+    print bold("     git yui build [control]")
     print bold("         git yui build dd")
     print "         Run the ant processes needed to build the control"
     print "             (Requires builder to be one directory above this project)"
@@ -520,7 +520,7 @@ else:
     print "         Run the build on all dir's in src."
     print "             (Requires builder to be one directory above this project)"
     print ""
-    print bold("     git yui docs <control1> <control2>")
+    print bold("     git yui docs [control1] [control2]")
     print bold("         git yui docs dd")
     print bold("         git yui docs dd anim node yui")
     print "         Build the API docs for the specified modules"
@@ -530,7 +530,7 @@ else:
     print "         Build the API docs for all modules"
     print "             (Requires yuidoc to be one directory above this project)"
     print ""
-    print bold("     git yui lint <path-to-file> <path-to-file> <path-to-file>")
+    print bold("     git yui lint [path-to-file] [path-to-file] [path-to-file]")
     print "         Run JSLint on the supplied files."
     print "             (Requires builder to be one directory above this project)"
     print ""
