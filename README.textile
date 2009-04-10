@@ -17,13 +17,15 @@ h3. TODO (in order of importance)
 * Build a Component from Source (working[1])
 * Build all Component Sources (working[1])
 * Generate API Docs (working[2])
-* Run JSLint on a file
-* Submit a Pull Request
+* Run JSLint on a file (working)
+* List all project forks (working)
+* Submit a Pull Request (working)
 * Create Build Files
-* Add a Ticket
-* Commit/Comment on a ticket
+* Add a Ticket[3]
+* Commit/Comment on a ticket[3]
 
 fn1. Partially working, waiting on developers to standardize build files
 
 fn2. Partially working, all docs currently throws an error (one of the files in src is bad.).
 
+fn3. Pending the release of the new YUI Bug Tracker with API support.

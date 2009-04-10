@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
-import os, sys, string, shutil, urllib2, urllib, pprint
+import os, sys, string, shutil, urllib2, urllib, pprint, simplejson
 from cStringIO import StringIO
 from subprocess import call, CalledProcessError, PIPE
 
+##Setup pp for debugging
 pp = pprint.PrettyPrinter(indent=4)
 
+##The supported projects, if not in this list, this script doesn't work
 supported_projects = [
     'yui2',
     'yui3',
@@ -13,14 +15,18 @@ supported_projects = [
     'builder'
 ]
 
+##Globals
 args = []
 count = 0
+username = None
 origin = None
 git_config = {}
 action = None
 git_dir = None
+build_dir = None
+member_list = None
 
-
+##Process the Arguments
 for arg in sys.argv:
     if count > 0:
         if not action:
@@ -30,16 +36,20 @@ for arg in sys.argv:
     count = count + 1
 
 
+##Format bold text
 def bold(str):
     return "\033[1m%s\033[0m" % str
 
+##Format red text (for errors)
 def red(str):
     return "\033[31m%s\033[0m" % str
 
+##Print and format an error, then exit the script
 def print_error(str):
     print  bold(red(str))
     sys.exit(1)
 
+##Fetch the git config and place it in the git_config global
 def fetchGitConfig():
     raw_config = os.popen('git config --list').read().split("\n")
     for i in raw_config:
@@ -47,6 +57,19 @@ def fetchGitConfig():
         if line[0]:
             git_config[line[0]] = line[1]
 
+##Fetch the list of users that forked this project
+def fetchMembersList():
+    if globals()['member_list']:
+        return
+    url = "http://github.com/yui/%s/network/members.json" % origin
+    data = simplejson.load(urllib.urlopen(url))
+    out = [];
+    for i in data['users']:
+        out.append(i['owner']['login'])
+
+    globals()['member_list'] = out
+
+##Parse the project out of the git config
 def fetchProject():
     if 'remote.origin.url' in git_config:
         org_remote = git_config['remote.origin.url'].replace('git@github.com:', '')
@@ -59,11 +82,16 @@ def fetchProject():
 
         if remote[1] not in supported_projects:
             print_error('Remote (%s) not in supported projects list: %s' % (remote[1], ",".join(supported_projects)))
-            
+        
+
+        if git_config['user.email']:
+            globals()['username'] = git_config['user.email']
+
         return remote[1]
     else:
         print_error('No remote origin found, are we in a git repo?')
 
+##Fetch the upstream code and drop it in to a branch
 def fetchUpstream(master, user=None):
     if not user:
         user = 'yui'
@@ -98,7 +126,7 @@ def fetchUpstream(master, user=None):
                 call(['git', 'branch', '-d', f_name])
                 print_error('Bad username given, branch %s deleted' % f_name)
 
-
+##Merge the upstream back into master
 def mergeUpstream(master, user):
     if not user:
         user = 'yui'
@@ -109,7 +137,23 @@ def mergeUpstream(master, user):
     if retcode == 0:
         retcode = call(['git', 'merge', f_name])
         
+##Check if the builder project is above the git root
+def checkBuilder():
+    build_dir = os.path.abspath(os.path.join(git_dir, '../builder'))
+    if not os.path.exists(build_dir):
+        print_error('Builder module was not found. Please install it: http://github.com/yui/builder')
 
+    globals()['build_dir'] = build_dir
+    
+##Check if the yuidoc project is above the git root
+def checkYUIDoc():
+    yuidoc_dir = os.path.abspath(os.path.join(git_dir, '../yuidoc'))
+    if not os.path.exists(yuidoc_dir):
+        print_error('YUIDoc module was not found. Please install it: http://github.com/yui/yuidoc')
+
+    globals()['doc_dir'] = os.path.abspath(os.path.join(yuidoc_dir, 'bin'))
+
+##Check if ant is installed
 def checkAnt():
     try:
         call(['ant', '-version'], stdout=PIPE)
@@ -118,7 +162,16 @@ def checkAnt():
     
     return True
 
+##Check if java is installed
+def checkJava():
+    try:
+        call(['java', '-version'], stdout=PIPE, stderr=PIPE)
+    except OSError:
+        print_error('Java was not found, please install it')
 
+    return True
+
+##Find the root of this project, the one with the .git as a direct child.
 def findGitRoot():
     if globals()["git_dir"]:
         return globals()["git_dir"]
@@ -148,7 +201,7 @@ def findGitRoot():
     globals()["error_file_path"] = error_file_path
     globals()["error_file"] = open(error_file_path, 'w+')
     
-
+##Build this item from source
 def buildFromSource(item):
     src_path = os.path.abspath(os.path.join(git_dir, 'src/%s' % item))
     if not os.path.exists(src_path):
@@ -167,7 +220,7 @@ def buildFromSource(item):
         else:
             print bold(red("No build.xml file found.."))
 
-
+##Get all the source directories, so we can build them
 def getSrcDirs():
     src_path = os.path.abspath(os.path.join(git_dir, 'src/'))
     os.chdir(src_path)
@@ -184,24 +237,14 @@ def getSrcDirs():
     
     return subdirs
 
+##Build all from source
 def buildAllFromSource():
     print bold("Building all from source..")
     subdirs = getSrcDirs()
     for i in subdirs:
         buildFromSource(i)
 
-def checkBuilder():
-    build_dir = os.path.abspath(os.path.join(git_dir, '../builder'))
-    if not os.path.exists(build_dir):
-        print_error('Builder module was not found. Please install it: http://github.com/yui/builder')
-    
-def checkYUIDoc():
-    yuidoc_dir = os.path.abspath(os.path.join(git_dir, '../yuidoc'))
-    if not os.path.exists(yuidoc_dir):
-        print_error('YUIDoc module was not found. Please install it: http://github.com/yui/yuidoc')
-
-    globals()['doc_dir'] = os.path.abspath(os.path.join(yuidoc_dir, 'bin'))
-    
+##Handle the build arg
 def buildControl(item):
     checkAnt()
     checkBuilder()
@@ -211,6 +254,7 @@ def buildControl(item):
     else:
         buildFromSource(item)
 
+##Generate the docs for a groups of modules
 def genDocs(items):
     prepDocParse()
     paths = []
@@ -240,12 +284,13 @@ def genDocs(items):
         print_error('Docs failed to parse. Call "git yui log" to see the error')
     print bold('Docs generated')
 
-
+##Generate all the docs
 def genAllDocs():
     print bold('Generating all docs')
     subdirs = getSrcDirs()
     genDocs(subdirs)
 
+##Prep for doc parsing, setting up directories
 def prepDocParse():
     src_path = os.path.abspath(os.path.join(git_dir, '../yui-docs'))
     if not os.path.exists(src_path):
@@ -256,6 +301,7 @@ def prepDocParse():
     else:
         print_error('Docs directory exists. Please run: git yui doc clean')
 
+##Remove the current docs directory
 def clearDocs():
     src_path = os.path.abspath(os.path.join(git_dir, '../yui-docs'))
     if os.path.exists(src_path):
@@ -263,10 +309,8 @@ def clearDocs():
         print bold("Old docs directory removed.")
     else:
         print bold("No directory to clean")
-       
-    
 
-
+##Handle the docs argument
 def buildDocs(item):
     checkYUIDoc()
 
@@ -277,10 +321,82 @@ def buildDocs(item):
     else:
         genDocs(item)
 
+##Handle the log argument
 def showLog():
     f = open(error_file_path_last)
     print f.read()
     
+##handle the lint argument
+def lintFiles(items):
+    for i in items:
+        lintFile(i)
+
+##Run JSLint on a file
+def lintFile(file):
+    if not os.path.exists(file):
+        print_error('File not found')
+    if not file.endswith('.js'):
+        print_error('File is not a JavaScript file.')
+
+    checkJava()
+    checkBuilder()
+    c_build = os.path.abspath(os.path.join(build_dir, 'componentbuild', 'lib'))
+    jar_path = os.path.abspath(os.path.join(c_build, 'rhino', 'js.jar'))
+    console_path = os.path.abspath(os.path.join(c_build, 'jslint', 'jslint-console.js'))
+    full_path = os.path.abspath(os.path.join(c_build, 'jslint', 'fulljslint.js'))
+    args = ['java', '-jar', jar_path, console_path, full_path, file]
+    call(args)
+
+##Show the list of forks for this project
+def showNetwork():
+    fetchMembersList()
+    for i in member_list:
+        print i
+
+##Show your last (n) commits and their SHA1's
+def showCommits(num):
+    print bold('Showing your last %s commits' % num)
+    args = [
+        'git',
+        '--no-pager',
+        'log',
+        '--author=%s' % username,
+        '--no-merges',
+        '--pretty=oneline',
+        '-n%s' % num
+    ]
+    call(args)
+
+def pullRequest(commitid):
+    print "%s %s" % (bold('Sending YUI a Pull Request for: '), commitid)
+    
+    try:
+        username = git_config['github.user']
+        token = git_config['github.token']
+    except KeyError:
+        print_error("No GitHub username or GitHub token in your git config.\nhttp://github.com/guides/tell-git-your-user-name-and-email-address")
+    
+    out = {}
+    out['login'] = username
+    out['token'] = token
+    out['message[body]'] = 'Dynamic Pull Request from git-yui for: %s' % username
+    out['message[to][]'] = ''
+    out['message[to][]'] = 'yui'
+
+    pp.pprint(out)
+
+    url = "http://github.com/%s/%s/pull_request/%s" % (username, origin, commitid)
+    data = urllib.urlencode(out)
+    req = urllib2.Request(url, data)
+    response = urllib2.urlopen(req)
+    
+    url = response.geturl()
+    info = response.info()
+    
+    ##There seems to be no way to tell if it was successful or not
+    print bold('Pull Request sent')
+    
+
 
 ########ACTION CODE STARTS HERE
 
@@ -289,12 +405,16 @@ findGitRoot()
 origin = fetchProject()
 
 
+
 ##Process the arguments.. Maybe a better way?
-##Don't want to use OptionParser, don't want to require the use of - arguments
+##I don't want to use OptionParser, don't want to require the use of - arguments
 if action == 'up':
     user = None
     if count > 2:
+        fetchMembersList()
         user = args[1]
+        if not user in member_list:
+            print_error('User (%s) not in network' % user)
     fetchUpstream(origin, user)
 elif action == 'merge':
     use_branch = True
@@ -306,7 +426,20 @@ elif action == 'merge':
         print_error('usebranch is false in config, this will do nothing.')
     user = None
     if count > 2:
+        fetchMembersList()
         user = args[1]
+        if not user in member_list:
+            print_error('User (%s) not in network' % user)
+    mergeUpstream(origin, user)
+elif action == 'sync':
+    user = None
+    if count > 2:
+        fetchMembersList()
+        user = args[1]
+        if not user in member_list:
+            print_error('User (%s) not in network' % user)
+
+    fetchUpstream(origin, user)
     mergeUpstream(origin, user)
 elif action == 'build':
     if count > 2:
@@ -324,35 +457,76 @@ elif action == 'docs' or action == 'doc':
         print_error('You must provide at least one component name')
 elif action == 'log':
     showLog()
+elif action == 'network':
+    showNetwork()
+elif action == 'commits':
+    num = 5
+    if count > 2:
+        num = args[1]
+    showCommits(num)
+elif action == 'pullreq' or action == 'pullrequest':
+    if count > 2:
+        pullRequest(args[1])
+    else:
+        print bold(red('You need to supply a commit id.'))
+        showCommits(5)
+elif action == 'lint':
+    if count > 2:
+        items = []
+        for k,v in enumerate(args):
+            if k > 0:
+                items.append(v)
+        lintFiles(items)
+    else:
+        print_error('No file given')
 else:
+    ##Print Help
     print bold("This helper app will help you develop and contribute to YUI.")
     print " Usage: git yui <action>"
     print bold("     git yui up")
-    print "         This will pull the latest changes from yui HEAD into a branch called yui_<project>"
+    print "         Pull the latest changes from yui HEAD into a branch called yui_<project>"
     print ""
     print bold("     git yui up <github username>")
-    print "         This will pull the latest changes from <username> HEAD into a branch called <username>_<project>"
+    print "         Pull the latest changes from <username> HEAD into a branch called <username>_<project>"
     print ""
     print bold("     git yui merge")
-    print "         This will merge the yui_<project> branch back into the master branch"
+    print "         Merge the yui_<project> branch back into the master branch"
     print ""
     print bold("     git yui merge <github username>")
-    print "         This will merge the <username>_<project> branch back into the master branch"
+    print "         Merge the <username>_<project> branch back into the master branch"
+    print ""
+    print bold("     git yui sync <github username>")
+    print "         Runs git yui up, then git yui merge"
     print ""
     print bold("     git yui build <control>")
     print bold("         git yui build dd")
-    print "         This will run the ant processes needed to build the control"
+    print "         Run the ant processes needed to build the control"
+    print "             (Requires builder to be one directory above this project)"
     print ""
     print bold("         git yui build all")
-    print "         This will run the build on all dir's in src."
+    print "         Run the build on all dir's in src."
+    print "             (Requires builder to be one directory above this project)"
     print ""
     print bold("     git yui docs <control1> <control2>")
     print bold("         git yui docs dd")
     print bold("         git yui docs dd anim node yui")
     print "         Build the API docs for the specified modules"
+    print "             (Requires yuidoc to be one directory above this project)"
     print ""
     print bold("         git yui docs all")
     print "         Build the API docs for all modules"
+    print "             (Requires yuidoc to be one directory above this project)"
+    print ""
+    print bold("     git yui lint <path-to-file> <path-to-file> <path-to-file>")
+    print "         Run JSLint on the supplied files."
+    print "             (Requires builder to be one directory above this project)"
+    print ""
+    print bold("     git yui network")
+    print "         Show the list of forks for this project."
+    print ""
+    print bold("     git yui pullreq SHA1")
+    print bold("     git yui pullrequest SHA1")
+    print "         Submit a Pull Request to YUI for the provided SHA1."
     print ""
     print bold("     git yui log")
     print "         Show the error (stderr) output of the last command."
