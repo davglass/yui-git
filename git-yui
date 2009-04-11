@@ -2,7 +2,7 @@
 
 import os, sys, string, shutil, urllib2, urllib, pprint, simplejson
 from cStringIO import StringIO
-from subprocess import call, CalledProcessError, PIPE
+from subprocess import call, PIPE
 
 ##Setup pp for debugging
 pp = pprint.PrettyPrinter(indent=4)
