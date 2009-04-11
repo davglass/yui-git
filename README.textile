@@ -20,7 +20,9 @@ h3. TODO (in order of importance)
 * Run JSLint on a file (working)
 * List all project forks (working)
 * Submit a Pull Request (working)
-* Create Build Files
+* Create Build Files (working)
+* Bash Completion Support
+* Windows Support[4]
 * Add a Ticket[3]
 * Commit/Comment on a ticket[3]
 
@@ -29,3 +31,5 @@ fn1. Partially working, waiting on developers to standardize build files
 fn2. Partially working, all docs currently throws an error (one of the files in src is bad.).
 
 fn3. Pending the release of the new YUI Bug Tracker with API support.
+
+fn4. If anyone wants to help out with this part, please do. I don't like building dev tools on Windows.
