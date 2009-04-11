@@ -441,7 +441,45 @@ def pullRequest(commitid):
         print bold('Pull Request sent')
     else:
         print_error('Pull Request cancelled')
+
+##Creates the directory structure for a new module
+def createComponent(name):
+    checkBuilder()
+    src_path = os.path.abspath(os.path.join(git_dir, 'src', name))
+    if os.path.exists(src_path):
+        print_error("Path exists, can not create:\n%s" % src_path)
+    print bold('Creating new module: %s' % name)
     
+    #Sand box
+    sbox_path = os.path.abspath(os.path.join(git_dir, 'sandbox', name))
+    #js dir
+    js_path = os.path.abspath(os.path.join(src_path, 'js'))
+    #Tests dir
+    test_path = os.path.abspath(os.path.join(src_path, 'tests'))
+    
+    #READMEs
+    sbox_readme = os.path.abspath(os.path.join(git_dir, 'sandbox', name, 'README'))
+    src_readme = os.path.abspath(os.path.join(src_path, 'README'))
+    
+    #Copy the builder files
+    build_prop = os.path.abspath(os.path.join(build_dir, 'componentbuild', 'templates', origin, 'build.properties'))
+    build_prop_final = os.path.abspath(os.path.join(src_path, 'build.properties'))
+    build_xml = os.path.abspath(os.path.join(build_dir, 'componentbuild', 'templates', origin, 'build.xml'))
+    build_xml_final = os.path.abspath(os.path.join(src_path, 'build.xml'))
+    
+    #Do all the work
+    os.mkdir(src_path)
+    os.mkdir(js_path)
+    os.mkdir(test_path)
+    os.mkdir(sbox_path)
+
+    open(src_readme, 'w').close()
+    open(sbox_readme, 'w').close()
+
+    shutil.copyfile(build_prop, build_prop_final)
+    shutil.copyfile(build_xml, build_xml_final)
+    
+    print bold('Module directories created and temp files copied')
 
 
 ########ACTION CODE STARTS HERE
@@ -488,11 +526,15 @@ elif action == 'sync':
     fetchUpstream(origin, user)
     mergeUpstream(origin, user)
 elif action == 'build':
+    if origin != 'yui2' and origin != 'yui3':
+        print_error('Not supported on this project')
     if count > 2:
         buildControl(args[1])
     else:
         print_error('You must provide a component name')
 elif action == 'docs' or action == 'doc':
+    if origin != 'yui2' and origin != 'yui3':
+        print_error('Not supported on this project')
     if count > 2:
         items = []
         for k,v in enumerate(args):
@@ -503,6 +545,13 @@ elif action == 'docs' or action == 'doc':
         print_error('You must provide at least one component name')
 elif action == 'log':
     showLog()
+elif action == 'create':
+    if origin != 'yui2' and origin != 'yui3':
+        print_error('Not supported on this project')
+    if count > 2:
+        createComponent(args[1])
+    else:
+        print_error('You must provide a component name')
 elif action == 'network' or action == 'users' or action == 'forks':
     showNetwork()
 elif action == 'commits':
@@ -577,6 +626,9 @@ else:
     print bold("     git yui pullreq SHA1")
     print bold("     git yui pullrequest SHA1")
     print "         Submit a Pull Request to YUI for the provided SHA1."
+    print ""
+    print bold("     git yui create [module]")
+    print "         Creates the directory structure for a new module."
     print ""
     print bold("     git yui log")
     print "         Show the error (stderr) output of the last command."
