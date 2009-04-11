@@ -2,7 +2,7 @@
 
 import os, sys, string, shutil, urllib2, urllib, pprint, simplejson
 from cStringIO import StringIO
-from subprocess import call, PIPE
+from subprocess import call, PIPE, Popen
 
 ##Setup pp for debugging
 pp = pprint.PrettyPrinter(indent=4)
@@ -176,17 +176,10 @@ def findGitRoot():
     if globals()["git_dir"]:
         return globals()["git_dir"]
 
-    dir = os.path.abspath('.')
-    check = os.path.join(dir, '.git')
-    tmp_git_dir = None
-    if os.path.exists(check):
-        tmp_git_dir = check
+    args = ['git', 'rev-parse', '--git-dir']
+    output = Popen(args, stdout=PIPE).communicate()[0]
 
-    while not tmp_git_dir:
-        dir = os.path.abspath(os.path.join(dir, '../'))
-        check = os.path.join(dir, '.git')
-        if os.path.exists(check):
-            tmp_git_dir = check
+    tmp_git_dir = os.path.abspath(output.strip())
     
     globals()["git_dir"] = os.path.abspath(os.path.join(tmp_git_dir, '../'))
 
@@ -387,13 +380,15 @@ def showNetwork():
             print i
 
 ##Show your last (n) commits and their SHA1's
-def showCommits(num):
-    print bold('Showing your last %s commits' % num)
+def showCommits(num, user):
+    if not user:
+        user = username
+    print bold('Showing last %s commits for %s' % (num, user))
     args = [
         'git',
         '--no-pager',
         'log',
-        '--author=%s' % username,
+        '--author=%s' % user,
         '--no-merges',
         '--pretty=oneline',
         '-n%s' % num
@@ -556,15 +551,18 @@ elif action == 'network' or action == 'users' or action == 'forks':
     showNetwork()
 elif action == 'commits':
     num = 5
+    user = username
     if count > 2:
         num = args[1]
-    showCommits(num)
+    if count > 3:
+        user = args[2]
+    showCommits(num, user)
 elif action == 'pullreq' or action == 'pullrequest':
     if count > 2:
         pullRequest(args[1])
     else:
         print bold(red('You need to supply a commit id.'))
-        showCommits(5)
+        showCommits(5, username)
 elif action == 'lint':
     if count > 2:
         items = []
@@ -620,8 +618,9 @@ else:
     print "         Show the list of forks for this project."
     print ""
     print bold("     git yui commits")
-    print bold("     git yui commits nn")
-    print "         Shows the last nn commits by you."
+    print bold("     git yui commits [nn]")
+    print bold("     git yui commits [nn] [email-address]")
+    print "         Shows the last [nn] commits by user. default: you."
     print ""
     print bold("     git yui pullreq SHA1")
     print bold("     git yui pullrequest SHA1")
