@@ -350,8 +350,41 @@ def lintFile(file):
 ##Show the list of forks for this project
 def showNetwork():
     fetchMembersList()
-    for i in member_list:
-        print i
+    list = member_list
+    list.sort()
+    ##This need to move to an API call on yuilibrary.com
+    contribs = [
+        'davglass',
+        'msweeney',
+        'miraglia',
+        'nzakas',
+        'apm',
+        'jlecomte',
+        'lsmith',
+        'jenny',
+        'sdesai',
+        'kloots',
+        'g13n',
+        'mlinac',
+        'gmoothart',
+        'emergence',
+        'ebi',
+        'Satyam',
+        'bluesmoon',
+        'caridy',
+        'cgriego',
+        'foxxtrot'
+    ]
+    contribs.sort()
+    print bold("List of forks for: %s" % origin)
+    print "Known contributors are bolded and marked with an *"
+    print bold('yui')
+    for i in contribs:
+        if i in list:
+            print bold("%s*" % i)
+    for i in list:
+        if not i in contribs and i != 'yui':
+            print i
 
 ##Show your last (n) commits and their SHA1's
 def showCommits(num):
