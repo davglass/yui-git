@@ -470,7 +470,7 @@ elif action == 'docs' or action == 'doc':
         print_error('You must provide at least one component name')
 elif action == 'log':
     showLog()
-elif action == 'network':
+elif action == 'network' or action == 'users' or action == 'forks':
     showNetwork()
 elif action == 'commits':
     num = 5
@@ -534,8 +534,12 @@ else:
     print "         Run JSLint on the supplied files."
     print "             (Requires builder to be one directory above this project)"
     print ""
-    print bold("     git yui network")
+    print bold("     git yui network|users|forks")
     print "         Show the list of forks for this project."
+    print ""
+    print bold("     git yui commits")
+    print bold("     git yui commits nn")
+    print "         Shows the last nn commits by you."
     print ""
     print bold("     git yui pullreq SHA1")
     print bold("     git yui pullrequest SHA1")
