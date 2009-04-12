@@ -492,6 +492,10 @@ if action == 'up':
     if count > 2:
         fetchMembersList()
         user = args[1]
+        if user == '?':
+            print bold('Available forks of this project:')
+            print ", ".join(member_list)
+            sys.exit(0)
         if not user in member_list:
             print_error('User (%s) not in network' % user)
     fetchUpstream(origin, user)
@@ -507,6 +511,10 @@ elif action == 'merge':
     if count > 2:
         fetchMembersList()
         user = args[1]
+        if user == '?':
+            print bold('Available forks of this project:')
+            print ", ".join(member_list)
+            sys.exit(0)
         if not user in member_list:
             print_error('User (%s) not in network' % user)
     mergeUpstream(origin, user)
@@ -515,6 +523,10 @@ elif action == 'sync':
     if count > 2:
         fetchMembersList()
         user = args[1]
+        if user == '?':
+            print bold('Available forks of this project:')
+            print ", ".join(member_list)
+            sys.exit(0)
         if not user in member_list:
             print_error('User (%s) not in network' % user)
 
