@@ -484,7 +484,6 @@ findGitRoot()
 origin = fetchProject()
 
 
-
 ##Process the arguments.. Maybe a better way?
 ##I don't want to use OptionParser, don't want to require the use of - arguments
 if action == 'up':
@@ -591,16 +590,16 @@ else:
     print bold("     git yui up")
     print "         Pull the latest changes from yui HEAD into a branch called yui_[project]"
     print ""
-    print bold("     git yui up [github username]")
+    print bold("     git yui up [github username] [?]")
     print "         Pull the latest changes from [username] HEAD into a branch called [username]_[project]"
     print ""
     print bold("     git yui merge")
     print "         Merge the yui_[project] branch back into the master branch"
     print ""
-    print bold("     git yui merge [github username]")
+    print bold("     git yui merge [github username] [?]")
     print "         Merge the [username]_[project] branch back into the master branch"
     print ""
-    print bold("     git yui sync [github username]")
+    print bold("     git yui sync [github username] [?]")
     print "         Runs git yui up, then git yui merge"
     print ""
     print bold("     git yui build [control]")
