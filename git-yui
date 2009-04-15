@@ -86,7 +86,7 @@ def fetchProject():
             print_error('Remote not found: %s' % org_remote)
 
         if remote[1] not in supported_projects:
-            print_error('Remote (%s) not in supported projects list: %s' % (remote[1], ",".join(supported_projects)))
+            print_error('(%s) is not in supported projects list: %s' % (remote[1], ",".join(supported_projects)))
         
 
         if git_config['user.email']:
@@ -646,19 +646,20 @@ def showHelp(item=None):
     formatHelp("merge", "Merge the yui_[project] branch back into the master branch")
     formatHelp("merge [github username] [?]", "Merge the [username]_[project] branch back into the master branch")
     formatHelp("sync [github username] [?]", "Runs git yui up, then git yui merge")
-    formatHelp("build [control]", "Run the ant processes needed to build the control*")
-    formatHelp("build all", "Run the build on all dir's in src.")
-    formatHelp("docs [control1] [control2]", "Build the API docs for the specified modules*")
-    formatHelp("docs all", "Build the API docs for all modules")
-    formatHelp("lint [path-to-file] [path-to-file] [path-to-file]", "Run JSLint on the supplied files*")
-    formatHelp("network|users|forks", "Show the list of forks for this project.")
-    formatHelp("commits [nn] [email-address]", "Shows the last [nn] commits by user. default: 5 and you.")
-    formatHelp("pullreq|pullrequest [SHA1]", "Submit a Pull Request to YUI for the provided SHA1.")
-    formatHelp("create [module]", "Creates the directory structure for a new module.")
-    formatHelp("comment [ticket id]", "Allows you to comment on a ticket for this YUI Project.")
-    formatHelp("comment [ticket id] [sha1]", "Add the comment from the supplied sha1 to the provided ticket")
-    formatHelp("ticket [ticket id]", "Shows you a summary of this ticket.")
-    formatHelp("log", "Show the error (stderr) output of the last command.")
+    formatHelp("build [control]", "Run the ant processes needed to build the control%s" % bold(red('*')))
+    formatHelp("build all", "Run the build on all dir's in src%s" % bold(red('*')))
+    formatHelp("docs [control1] [control2]", "Build the API docs for the specified modules%s" % bold(red('*')))
+    formatHelp("docs all", "Build the API docs for all modules%s" % bold(red('*')))
+    formatHelp("lint [path-to-file] [path-to-file] [path-to-file]", "Run JSLint on the supplied files%s" % bold(red('*')))
+    formatHelp("network|users|forks", "Show the list of forks for this project")
+    formatHelp("commits [nn] [email-address]", "Shows the last [nn] commits by user. default: 5 and you")
+    formatHelp("pullreq|pullrequest [SHA1]", "Submit a Pull Request to YUI for the provided SHA1")
+    formatHelp("create [module]", "Creates the directory structure for a new module")
+    formatHelp("comment [ticket id]", "Allows you to comment on a yuilibrary.com ticket for this YUI Project")
+    formatHelp("comment [ticket id] [sha1]", "Add the comment from the supplied sha1 to the provided yuilibrary.com ticket")
+    formatHelp("ticket [ticket id]", "Shows you a summary of this yuilibrary.com ticket")
+    formatHelp("log", "Show the error (stderr) output of the last command")
+    print "%s denotes a dependency" % bold(red('*'))
 
 ########ACTION CODE STARTS HERE
 
