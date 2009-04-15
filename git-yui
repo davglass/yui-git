@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, sys, string, shutil, urllib2, urllib, pprint, simplejson
+import os, sys, string, shutil, urllib2, urllib, pprint, simplejson, datetime
 from cStringIO import StringIO
 from subprocess import call, PIPE, Popen
 
@@ -16,6 +16,7 @@ supported_projects = [
 ]
 
 ##Globals
+server_name = 'http://yuilib.com'
 args = []
 count = 0
 username = None
@@ -437,6 +438,129 @@ def pullRequest(commitid):
     else:
         print_error('Pull Request cancelled')
 
+##Get ticket data
+def getTicket(id):
+    if not 'yui.user' in git_config:
+        print_error('No yui user setting in your git config')
+    if not 'yui.token' in git_config:
+        print_error('No yui token found in your git config')
+
+    uname = git_config['yui.user']
+    token = git_config['yui.token']
+
+    url = "%s/projects/%s/api/v1/ticket?username=%s&token=%s&id=%s" % (server_name, origin, uname, token, id)
+    data = simplejson.load(urllib.urlopen(url))
+
+    return data
+
+def formatDate(stamp):
+    return datetime.datetime.fromtimestamp(int(stamp))
+
+##Show a ticket
+def ticketShow(id):
+    data = getTicket(id)
+
+    if 'error' in data:
+        print_error(data['error'])
+
+    ticket = data['data']
+    #pp.pprint(ticket)
+    sep = '----------------------------------------------------------------------------'
+    
+    print bold("Ticket #%s: %s" % (ticket['id'], ticket['summary']))
+    print "(%s %s)" % (ticket['status'], ticket['type'])
+    print ""
+    print "%s created on: %s" % (ticket['reporter'], formatDate(ticket['time']))
+    print "Last modified on: %s" % (formatDate(ticket['changetime']))
+    print "Owner: %s" % ticket['owner']
+    print ""
+    print sep
+    print "Description:"
+    print ticket['description']
+    print sep
+    print ""
+
+    print "|%s" % sep
+    print "| This bug currently has the following settings:"
+    print "| Component: %s" % ticket['component']
+    print "| Severity: %s" % ticket['severity']
+    print "| Priority: %s" % ticket['priority']
+    print "| Ticket Type: %s" % ticket['type']
+    rel = ticket['milestone']
+    if rel == '':
+        rel = '--'
+    print "| Target Release: %s" % rel
+    print "| Ticket URL: %s" % ticket['url']
+    print "|%s" % sep
+    print ""
+    
+    comment = False
+    for i in ticket['history']:
+        if i['comment']:
+            comment = i
+    
+    if comment:
+        print ""
+        print "Last Comment by %s on %s" % (comment['author'], formatDate(comment['stamp']))
+        print sep
+        print ""
+        print comment['comment']
+        print ""
+        print ""
+
+
+##Comment on a Bug Ticket
+def ticketComment(id):
+    print "%s %s" % (bold("Adding a comment to:"), id)
+    
+    data = getTicket(id)
+
+    if 'error' in data:
+        print_error(data['error'])
+    
+    print bold('Add your comment below:')
+    print "Control + d to end your comment"
+    comment = sys.stdin.readlines()
+
+
+    uname = git_config['yui.user']
+    token = git_config['yui.token']
+
+    comment = "".join(comment)
+    out = {}
+    out['id'] = id
+    out['username'] = uname
+    out['token'] = token
+    out['action'] = 'comment'
+    out['comment'] = comment
+
+    url = "%s/projects/%s/api/v1/ticket" % (server_name, origin)
+    data = urllib.urlencode(out)
+    req = urllib2.Request(url, data)
+    response = simplejson.load(urllib2.urlopen(req))
+    
+    if 'error' in response:
+        print_error(data['error'])
+    else:
+        print bold('Comment added to ticket')
+        print response['data']['url']
+        copy(response['data']['url'])
+
+##Copies content to the OS clipboard
+def copy(content):
+    system = sys.platform
+    if system == 'darwin':
+        p = Popen(['pbcopy'], stdin=PIPE)
+        p.stdin.write(content)
+        p.stdin.close()
+        retcode = p.wait()
+    elif system == 'linux':
+        p = Popen(['xclip'], stdin=PIPE)
+        p.stdin.write(content)
+        p.stdin.close()
+        retcode = p.wait()
+
+
 ##Creates the directory structure for a new module
 def createComponent(name):
     checkBuilder()
@@ -551,6 +675,16 @@ elif action == 'docs' or action == 'doc':
         print_error('You must provide at least one component name')
 elif action == 'log':
     showLog()
+elif action == 'ticket':
+    if count > 2:
+        ticketShow(args[1])
+    else:
+        print bold(red('You need to provide a ticket id.'))
+elif action == 'comment':
+    if count > 2:
+        ticketComment(args[1])
+    else:
+        print bold(red('You need to provide a ticket id.'))
 elif action == 'create':
     if origin != 'yui2' and origin != 'yui3':
         print_error('Not supported on this project')
@@ -639,6 +773,12 @@ else:
     print ""
     print bold("     git yui create [module]")
     print "         Creates the directory structure for a new module."
+    print ""
+    print bold("     git yui comment [ticket id]")
+    print "         Allows you to comment on a ticket for this YUI Project."
+    print ""
+    print bold("     git yui ticket [ticket id]")
+    print "         Shows you a summary of this ticket."
     print ""
     print bold("     git yui log")
     print "         Show the error (stderr) output of the last command."

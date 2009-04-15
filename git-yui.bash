@@ -16,7 +16,7 @@ _git_yui () {
     
     if [ "$command" == "yui" ]; then
 	    #local cur="${COMP_WORDS[COMP_CWORD]}"
-	    local subcommands="up merge sync build docs lint forks pullrequest create network commits log"
+	    local subcommands="up merge sync build docs lint forks pullrequest create network commits comment log"
         __gitcomp "$subcommands"
     else
         _git
