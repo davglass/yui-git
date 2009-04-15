@@ -23,7 +23,6 @@ h3. TODO (in order of importance)
 * Create Build Files (working)
 * Bash Completion Support[5]
 * Windows Support[4]
-* Add a Ticket[3]
 * Commit/Comment on a ticket[3] (working on beta server)
 * View summary of a ticket[3] (working on beta server)
 
