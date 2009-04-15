@@ -514,12 +514,12 @@ def ticketComment(id, sha1=None):
     print "%s %s" % (bold("Adding a comment to:"), id)
     
     data = getTicket(id)
+    comment = None
 
     if 'error' in data:
         print_error(data['error'])
     
     if sha1:
-        #git --no-pager log 6c2dd4592a175bfab67e0a081348dd18dffeeafb -n1 --pretty=format:%s
         args = [
             'git',
             '--no-pager',
@@ -700,7 +700,7 @@ elif action == 'ticket':
     else:
         print bold(red('You need to provide a ticket id.'))
 elif action == 'comment':
-    if count > 2:
+    if count > 3:
         ticketComment(args[1], args[2])
     elif count > 2:
         ticketComment(args[1])
