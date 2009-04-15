@@ -510,7 +510,7 @@ def ticketShow(id):
 
 
 ##Comment on a Bug Ticket
-def ticketComment(id):
+def ticketComment(id, sha1=None):
     print "%s %s" % (bold("Adding a comment to:"), id)
     
     data = getTicket(id)
@@ -518,9 +518,26 @@ def ticketComment(id):
     if 'error' in data:
         print_error(data['error'])
     
-    print bold('Add your comment below:')
-    print "Control + d to end your comment"
-    comment = sys.stdin.readlines()
+    if sha1:
+        #git --no-pager log 6c2dd4592a175bfab67e0a081348dd18dffeeafb -n1 --pretty=format:%s
+        args = [
+            'git',
+            '--no-pager',
+            'log',
+            sha1,
+            '--no-merges',
+            '--pretty=format:%s',
+            '-n1'
+        ]
+        comment = Popen(args, stdout=PIPE).communicate()[0]
+        if comment == "":
+            print_error('Failed to find a log message for %s' % sha1)
+
+    
+    if not comment:
+        print bold('Add your comment below:')
+        print "Control + d to end your comment"
+        comment = sys.stdin.readlines()
 
 
     uname = git_config['yui.user']
@@ -533,6 +550,8 @@ def ticketComment(id):
     out['token'] = token
     out['action'] = 'comment'
     out['comment'] = comment
+
+    #pp.pprint(out)
 
     url = "%s/projects/%s/api/v1/ticket" % (server_name, origin)
     data = urllib.urlencode(out)
@@ -682,6 +701,8 @@ elif action == 'ticket':
         print bold(red('You need to provide a ticket id.'))
 elif action == 'comment':
     if count > 2:
+        ticketComment(args[1], args[2])
+    elif count > 2:
         ticketComment(args[1])
     else:
         print bold(red('You need to provide a ticket id.'))
@@ -776,6 +797,9 @@ else:
     print ""
     print bold("     git yui comment [ticket id]")
     print "         Allows you to comment on a ticket for this YUI Project."
+    print ""
+    print bold("     git yui comment [ticket id] [sha1]")
+    print "         Add the comment from the supplied sha1 to the provided ticket"
     print ""
     print bold("     git yui ticket [ticket id]")
     print "         Shows you a summary of this ticket."
