@@ -24,7 +24,8 @@ h3. TODO (in order of importance)
 * Bash Completion Support[5]
 * Windows Support[4]
 * Add a Ticket[3]
-* Commit/Comment on a ticket[3]
+* Commit/Comment on a ticket[3] (working on beta server)
+* View summary of a ticket[3] (working on beta server)
 
 fn1. Partially working, waiting on developers to standardize build files
 
