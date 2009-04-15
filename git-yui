@@ -624,6 +624,42 @@ def createComponent(name):
     print bold('Module directories created and temp files copied')
 
 
+def formatHelp(action, string):
+    if help_limit:
+        if action.startswith(help_limit):
+            print "    %s:\n        %s" % (bold(action), string)
+            print ""
+    else:
+        print "    %s:\n        %s" % (bold(action), string)
+        print ""
+
+def showHelp(item=None):
+    label = "[action]"
+    globals()['help_limit'] = False
+    if item:
+        label = "%s" % item
+        globals()['help_limit'] = item
+
+    print "usage: git yui %s" % (label)
+    formatHelp("up", "Pull the latest changes from yui HEAD into a branch called yui_[project]")
+    formatHelp("up [github username] [?]", "Pull the latest changes from [username] HEAD into a branch called [username]_[project]")
+    formatHelp("merge", "Merge the yui_[project] branch back into the master branch")
+    formatHelp("merge [github username] [?]", "Merge the [username]_[project] branch back into the master branch")
+    formatHelp("sync [github username] [?]", "Runs git yui up, then git yui merge")
+    formatHelp("build [control]", "Run the ant processes needed to build the control*")
+    formatHelp("build all", "Run the build on all dir's in src.")
+    formatHelp("docs [control1] [control2]", "Build the API docs for the specified modules*")
+    formatHelp("docs all", "Build the API docs for all modules")
+    formatHelp("lint [path-to-file] [path-to-file] [path-to-file]", "Run JSLint on the supplied files*")
+    formatHelp("network|users|forks", "Show the list of forks for this project.")
+    formatHelp("commits [nn] [email-address]", "Shows the last [nn] commits by user. default: 5 and you.")
+    formatHelp("pullreq|pullrequest [SHA1]", "Submit a Pull Request to YUI for the provided SHA1.")
+    formatHelp("create [module]", "Creates the directory structure for a new module.")
+    formatHelp("comment [ticket id]", "Allows you to comment on a ticket for this YUI Project.")
+    formatHelp("comment [ticket id] [sha1]", "Add the comment from the supplied sha1 to the provided ticket")
+    formatHelp("ticket [ticket id]", "Shows you a summary of this ticket.")
+    formatHelp("log", "Show the error (stderr) output of the last command.")
+
 ########ACTION CODE STARTS HERE
 
 fetchGitConfig()
@@ -743,69 +779,7 @@ elif action == 'lint':
         print_error('No file given')
 else:
     ##Print Help
-    print bold("This helper app will help you develop and contribute to YUI.")
-    print " Usage: git yui [action]"
-    print bold("     git yui up")
-    print "         Pull the latest changes from yui HEAD into a branch called yui_[project]"
-    print ""
-    print bold("     git yui up [github username] [?]")
-    print "         Pull the latest changes from [username] HEAD into a branch called [username]_[project]"
-    print ""
-    print bold("     git yui merge")
-    print "         Merge the yui_[project] branch back into the master branch"
-    print ""
-    print bold("     git yui merge [github username] [?]")
-    print "         Merge the [username]_[project] branch back into the master branch"
-    print ""
-    print bold("     git yui sync [github username] [?]")
-    print "         Runs git yui up, then git yui merge"
-    print ""
-    print bold("     git yui build [control]")
-    print bold("         git yui build dd")
-    print "         Run the ant processes needed to build the control"
-    print "             (Requires builder to be one directory above this project)"
-    print ""
-    print bold("         git yui build all")
-    print "         Run the build on all dir's in src."
-    print "             (Requires builder to be one directory above this project)"
-    print ""
-    print bold("     git yui docs [control1] [control2]")
-    print bold("         git yui docs dd")
-    print bold("         git yui docs dd anim node yui")
-    print "         Build the API docs for the specified modules"
-    print "             (Requires yuidoc to be one directory above this project)"
-    print ""
-    print bold("         git yui docs all")
-    print "         Build the API docs for all modules"
-    print "             (Requires yuidoc to be one directory above this project)"
-    print ""
-    print bold("     git yui lint [path-to-file] [path-to-file] [path-to-file]")
-    print "         Run JSLint on the supplied files."
-    print "             (Requires builder to be one directory above this project)"
-    print ""
-    print bold("     git yui network|users|forks")
-    print "         Show the list of forks for this project."
-    print ""
-    print bold("     git yui commits")
-    print bold("     git yui commits [nn]")
-    print bold("     git yui commits [nn] [email-address]")
-    print "         Shows the last [nn] commits by user. default: you."
-    print ""
-    print bold("     git yui pullreq SHA1")
-    print bold("     git yui pullrequest SHA1")
-    print "         Submit a Pull Request to YUI for the provided SHA1."
-    print ""
-    print bold("     git yui create [module]")
-    print "         Creates the directory structure for a new module."
-    print ""
-    print bold("     git yui comment [ticket id]")
-    print "         Allows you to comment on a ticket for this YUI Project."
-    print ""
-    print bold("     git yui comment [ticket id] [sha1]")
-    print "         Add the comment from the supplied sha1 to the provided ticket"
-    print ""
-    print bold("     git yui ticket [ticket id]")
-    print "         Shows you a summary of this ticket."
-    print ""
-    print bold("     git yui log")
-    print "         Show the error (stderr) output of the last command."
+    if count > 2:
+        showHelp(args[1])
+    else:
+        showHelp()
