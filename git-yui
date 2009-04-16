@@ -82,7 +82,7 @@ def fetchProject():
         remote = remote.replace('http://github.com:', '')
         remote = remote.replace('.git', '')
         remote = remote.split('/')
-        if not remote[1]:
+        if len(remote) < 2:
             print_error('Remote not found: %s' % org_remote)
 
         if remote[1] not in supported_projects:
