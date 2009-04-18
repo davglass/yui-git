@@ -623,6 +623,18 @@ def createComponent(name):
     
     print bold('Module directories created and temp files copied')
 
+def showMyTickets():
+    if not 'yui.user' in git_config:
+        print_error('No yui user setting in your git config')
+    if not 'yui.token' in git_config:
+        print_error('No yui token found in your git config')
+
+    url = "%s/projects/%s/api/v1/report?reportid=5&username=%s&token=%s" % (server_name, origin, git_config['yui.user'], git_config['yui.token'])
+    data = simplejson.load(urllib.urlopen(url))
+    #pp.pprint(data)
+
+    for i in data['results']:
+        print bold("%s: [%s] %s" % (i['id'], i['status'], i['summary']))
 
 def formatHelp(action, string):
     if help_limit:
@@ -658,6 +670,7 @@ def showHelp(item=None):
     formatHelp("comment [ticket id]", "Allows you to comment on a yuilibrary.com ticket for this YUI Project")
     formatHelp("comment [ticket id] [sha1]", "Add the comment from the supplied sha1 to the provided yuilibrary.com ticket")
     formatHelp("ticket [ticket id]", "Shows you a summary of this yuilibrary.com ticket")
+    formatHelp("my", "Shows you a list of your open tickets")
     formatHelp("log", "Show the error (stderr) output of the last command")
     print "%s denotes a dependency" % bold(red('*'))
 
@@ -734,6 +747,8 @@ elif action == 'docs' or action == 'doc':
         print_error('You must provide at least one component name')
 elif action == 'log':
     showLog()
+elif action == 'my':
+    showMyTickets()
 elif action == 'ticket':
     if count > 2:
         ticketShow(args[1])
