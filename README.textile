@@ -2,6 +2,9 @@ h1. YUI Git
 
 This is an attempt at making a: @git yui@ command line tool for use when contributing to YUI.
 
+h2. Screen Shots
+
+Added Screen Shots here: "http://wiki.github.com/davglass/yui-git/screen-shots":http://wiki.github.com/davglass/yui-git/screen-shots
 
 h2. Installation
 
