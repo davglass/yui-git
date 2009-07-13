@@ -645,6 +645,11 @@ def formatHelp(action, string):
         print "    %s:\n        %s" % (bold(action), string)
         print ""
 
+def guessComp():
+    test_path = os.path.abspath(os.path.join('./')).replace(git_dir, '').replace('/sandbox/', '').replace('/src/', '').replace('/build/', '')
+    test_path = test_path.split(os.sep)
+    return test_path[0]
+
 def showHelp(item=None):
     label = "[action]"
     globals()['help_limit'] = False
@@ -730,8 +735,16 @@ elif action == 'sync':
 elif action == 'build':
     if origin != 'yui2' and origin != 'yui3':
         print_error('Not supported on this project')
+    comp = False
     if count > 2:
-        buildControl(args[1])
+        comp = args[1]
+    
+    if not comp:
+        #Try to find the component that we are in and auto build it.
+        comp = guessComp()
+
+    if comp:
+        buildControl(comp)
     else:
         print_error('You must provide a component name')
 elif action == 'docs' or action == 'doc':
