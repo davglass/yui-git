@@ -8,8 +8,21 @@ Added Screen Shots here: "http://wiki.github.com/davglass/yui-git/screen-shots":
 
 h2. Installation
 
-You must have python installed on your machine before this will work.
-To install, clone the project. Then place the @git-yui@ file in your path somewhere.
+h3. Mac/Linux
+You must have python/setuptools installed on your machine before this will work.
+
+h3. Windows/Cygwin
+Install python in cygwin, then download and install setuptools:
+http://pypi.python.org/packages/source/s/setuptools/setuptools-0.6c9.tar.gz#md5=3864c01d9c719c8924c455714492295e
+
+cd setuptools-*
+python setup.py install
+
+Now install the simplejson module
+easy_install simplejson
+
+Now clone the project. Then place the @git-yui@ file in your path somewhere.
+
 
 That should do it. Eventually, I'll build a Makefile for it :)
 
