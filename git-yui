@@ -405,16 +405,31 @@ def pullRequest(commitid):
     print "%s %s" % (bold('Sending YUI a Pull Request for: '), commitid[0:8])
     
     try:
-        username = git_config['github.user']
-        token = git_config['github.token']
+        username = git_config['yui.user']
+        token = git_config['yui.token']
     except KeyError:
-        print_error("No GitHub username or GitHub token in your git config.\nhttp://github.com/guides/tell-git-your-user-name-and-email-address")
+        print_error("No YUI username or GitHub token in your git config.\nhttp://wiki.github.com/davglass/yui-git/yui-api-token")
     
     out = {}
-    out['login'] = username
+    out['nocache'] = 'nocache'
+    out['username'] = username
     out['token'] = token
-    out['message[to][]'] = ''
-    out['message[to][]'] = 'yui'
+    out['component'] = 'None'
+    out['commit'] = commitid
+    args = [
+        'git',
+        '--no-pager',
+        'log',
+        commitid,
+        '--no-merges',
+        '--pretty=format:%s',
+        '-n1'
+    ]
+    out['subject'] = Popen(args, stdout=PIPE).communicate()[0]
+
+    #Auto-Detect
+    out['branch'] = 'master'
+
 
     print bold('Please add a (one line) comment to this request:')
 
@@ -425,20 +440,26 @@ def pullRequest(commitid):
         if not comment:
             print_error('No comment given, Pull Request failed.')
 
-    out['message[body]'] = comment
+    out['subject'] = comment
+
 
     print bold('Are you sure you wish to make a Pull Request for %s/%s? [Y/n]' % (origin, commitid[0:8]))
     go = sys.stdin.readline().strip().lower()
 
     if go[0:1] == 'y':
-        print bold('Sending Pull Request to GitHub')
-        url = "http://github.com/%s/%s/pull_request/%s" % (username, origin, commitid)
+        print bold('Sending Pull Request to YUILibrary.com')
+        url = "%s/projects/%s/api/v1/pullrequest" % (server_name, origin)
         data = urllib.urlencode(out)
         req = urllib2.Request(url, data)
-        response = urllib2.urlopen(req)
-        
-        ##There seems to be no way to tell if it was successful or not
-        print bold('Pull Request sent')
+        data = simplejson.load(urllib2.urlopen(req))
+        if 'id' in data:
+            url = '%s/projects/%s/ticket/%s' % (server_name, origin, data['id'])
+            copy(url)
+            print bold('Pull Request Submitted:')
+            print url
+
+        if 'error' in data:
+            print_error(data['error'])
     else:
         print_error('Pull Request cancelled')
 
