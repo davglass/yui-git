@@ -406,10 +406,14 @@ def pullRequest(commitid):
     
     try:
         username = git_config['yui.user']
+        ghusername = git_config['github.user']
         token = git_config['yui.token']
     except KeyError:
         print_error("No YUI username or GitHub token in your git config.\nhttp://wiki.github.com/davglass/yui-git/yui-api-token")
     
+    if len(commitid) < 40:
+        print_error("You must give a full sha1")
+
     out = {}
     out['nocache'] = 'nocache'
     out['username'] = username
@@ -440,7 +444,8 @@ def pullRequest(commitid):
         if not comment:
             print_error('No comment given, Pull Request failed.')
 
-    out['subject'] = comment
+    out['message'] = comment
+    out['url'] = 'http://github.com/%s/%s/commit/%s' % (ghusername, origin, commitid)
 
 
     print bold('Are you sure you wish to make a Pull Request for %s/%s? [Y/n]' % (origin, commitid[0:8]))
