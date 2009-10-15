@@ -408,6 +408,51 @@ def showCommits(num, user):
     ]
     call(args)
 
+def showGalleryPending(id):
+    print bold('Gallery Pending Items')
+
+    try:
+        username = git_config['yui.user']
+        ghusername = git_config['github.user']
+        token = git_config['yui.token']
+    except KeyError:
+        print_error("No YUI username or GitHub token in your git config.\nhttp://wiki.github.com/davglass/yui-git/yui-api-token")
+
+    url = "%s/gallery/api/pullpending" % server_name
+    req = urllib2.Request(url)
+    data = simplejson.load(urllib2.urlopen(req))
+    
+    if data['count'] > 0:
+        if id:
+            for i in data['results']:
+                if i['pullid'] == id:
+                    print bold('[%s] %s' % (i['pullid'], i['title']))
+                    gh = i['userinfo']['github']
+                    print '--------------------------------------------------------------------------'
+
+                    remote_name = 'remote.%s.url' % gh
+
+                    if not remote_name in git_config:
+                        #call(['git', 'remote', 'add', gh, 'git://github.com/%s/%s.git' % (gh, master)])
+                        print "git remote add %s git://github.com/%s/yui3-gallery.git" % (gh, gh)
+                    print "git checkout -b %s" % i['sha1']
+                    print "git pull %s %s" % (gh, i['branch'])
+                    print "git reset %s" % i['sha1']
+                    print "git yui lint build/%s/*.js src/%s/js/*" % (i['module'], i['module'])
+                    print '--------------------------------------------------------------------------'
+                    
+        else:
+            for i in data['results']:
+                print bold('[%s] %s' % (i['pullid'], i['title']))
+                print 'command: %s' % (bold('git yui pending %s' % i['pullid']))
+                print '--------------------------------------------------------------------------'
+                print i['summary']
+                print '--------------------------------------------------------------------------'
+    else:
+        print_error('No pending requests found')
+
+
+
 ##Issue a Pull Request to yui on GitHub
 def pullRequest(commitid):
     print "%s %s" % (bold('Sending YUI a Pull Request for: '), commitid[0:8])
@@ -819,7 +864,6 @@ elif action == 'comment':
     else:
         print bold(red('You need to provide a ticket id.'))
 elif action == 'create':
-    #if origin != 'yui2' and origin != 'yui3':
     if not origin in supported_builds:
         print_error('Not supported on this project')
     if count > 2:
@@ -842,7 +886,15 @@ elif action == 'pullreq' or action == 'pullrequest':
     else:
         print bold(red('You need to supply a commit id.'))
         showCommits(5, username)
-elif action == 'lint':
+elif action == 'pending':
+    if origin == 'yui3-gallery':
+        id = 0
+        if count > 2:
+            id = args[1]
+        showGalleryPending(id)
+    else:
+        print_error('Not in the gallery project')
+elif action == 'lint' or action == 'jslint':
     if count > 2:
         items = []
         for k,v in enumerate(args):
