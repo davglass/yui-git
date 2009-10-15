@@ -11,8 +11,16 @@ pp = pprint.PrettyPrinter(indent=4)
 supported_projects = [
     'yui2',
     'yui3',
+    'yui3-gallery',
     'yuidoc',
     'builder'
+]
+
+##The supported build projects
+supported_builds = [
+    'yui2',
+    'yui3',
+    'yui3-gallery'
 ]
 
 ##Globals
@@ -759,7 +767,8 @@ elif action == 'sync':
     fetchUpstream(origin, user)
     mergeUpstream(origin, user)
 elif action == 'build':
-    if origin != 'yui2' and origin != 'yui3':
+    #if origin != 'yui2' and origin != 'yui3':
+    if not origin in supported_builds:
         print_error('Not supported on this project')
     comp = False
     if count > 2:
@@ -774,7 +783,8 @@ elif action == 'build':
     else:
         print_error('You must provide a component name')
 elif action == 'docs' or action == 'doc':
-    if origin != 'yui2' and origin != 'yui3':
+    #if origin != 'yui2' and origin != 'yui3':
+    if not origin in supported_builds:
         print_error('Not supported on this project')
     if count > 2:
         items = []
@@ -787,13 +797,21 @@ elif action == 'docs' or action == 'doc':
 elif action == 'log':
     showLog()
 elif action == 'my':
+    if origin == 'yui3-gallery':
+        print_error('Ticket list not supported for this project.')
+
     showMyTickets()
 elif action == 'ticket':
+    if origin == 'yui3-gallery':
+        print_error('Ticket list not supported for this project.')
     if count > 2:
         ticketShow(args[1])
     else:
         print bold(red('You need to provide a ticket id.'))
 elif action == 'comment':
+    if origin == 'yui3-gallery':
+        print_error('Ticket list not supported for this project.')
+
     if count > 3:
         ticketComment(args[1], args[2])
     elif count > 2:
@@ -801,7 +819,8 @@ elif action == 'comment':
     else:
         print bold(red('You need to provide a ticket id.'))
 elif action == 'create':
-    if origin != 'yui2' and origin != 'yui3':
+    #if origin != 'yui2' and origin != 'yui3':
+    if not origin in supported_builds:
         print_error('Not supported on this project')
     if count > 2:
         createComponent(args[1])
