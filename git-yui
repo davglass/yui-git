@@ -97,8 +97,11 @@ def fetchProject():
             print_error('(%s) is not in supported projects list: %s' % (remote[1], ",".join(supported_projects)))
         
 
+        if 'github.user' in git_config:
+            globals()['username'] = git_config['github.user']
+
         if git_config['user.email']:
-            globals()['username'] = git_config['user.email']
+            globals()['useremail'] = git_config['user.email']
 
         return remote[1]
     else:
@@ -671,17 +674,26 @@ def createComponent(name):
         print_error("Path exists, can not create:\n%s" % src_path)
     print bold('Creating new module: %s' % name)
     
+    origin = globals()['origin']
+
     #Sand box
-    sbox_path = os.path.abspath(os.path.join(git_dir, 'sandbox', name))
+    if origin == 'yui3-gallery':
+        sbox_path = os.path.abspath(os.path.join(git_dir, 'sandbox', username, name))
+        sbox_readme = os.path.abspath(os.path.join(git_dir, 'sandbox', username, name, 'README'))
+    else:
+        sbox_readme = os.path.abspath(os.path.join(git_dir, 'sandbox', name, 'README'))
+        sbox_path = os.path.abspath(os.path.join(git_dir, 'sandbox', name))
     #js dir
     js_path = os.path.abspath(os.path.join(src_path, 'js'))
     #Tests dir
     test_path = os.path.abspath(os.path.join(src_path, 'tests'))
     
     #READMEs
-    sbox_readme = os.path.abspath(os.path.join(git_dir, 'sandbox', name, 'README'))
     src_readme = os.path.abspath(os.path.join(src_path, 'README'))
     
+    if origin == 'yui3-gallery':
+        origin = 'yui3'
+
     #Copy the builder files
     build_prop = os.path.abspath(os.path.join(build_dir, 'componentbuild', 'templates', origin, 'build.properties'))
     build_prop_final = os.path.abspath(os.path.join(src_path, 'build.properties'))
