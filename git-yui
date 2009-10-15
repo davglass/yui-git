@@ -422,7 +422,12 @@ def showGalleryPending(id):
         print_error("No YUI username or GitHub token in your git config.\nhttp://wiki.github.com/davglass/yui-git/yui-api-token")
 
     url = "%s/gallery/api/pullpending" % server_name
-    req = urllib2.Request(url)
+    out = {}
+    out['nocache'] = 'nocache'
+    out['username'] = username
+    out['token'] = token
+    data = urllib.urlencode(out)
+    req = urllib2.Request(url, data)
     data = simplejson.load(urllib2.urlopen(req))
     
     if data['count'] > 0:
@@ -437,11 +442,19 @@ def showGalleryPending(id):
 
                     if not remote_name in git_config:
                         #call(['git', 'remote', 'add', gh, 'git://github.com/%s/%s.git' % (gh, master)])
-                        print "git remote add %s git://github.com/%s/yui3-gallery.git" % (gh, gh)
-                    print "git checkout -b %s" % i['sha1']
-                    print "git pull %s %s" % (gh, i['branch'])
-                    print "git reset %s" % i['sha1']
-                    print "git yui lint build/%s/*.js src/%s/js/*" % (i['module'], i['module'])
+                        #print "git remote add %s git://github.com/%s/yui3-gallery.git" % (gh, gh)
+                        #Change when gallery is live!!
+                        print "git remote add %s git@github.com:%s/yui3-gallery.git" % (gh, gh)
+                    branch = "pending-%s" % i['sha1'][0:9]
+                    #print "git checkout -b %s" % branch
+                    call(['git', 'checkout', '-b', branch])
+                    #print "git pull %s %s:%s" % (gh, i['branch'], branch)
+                    call(['git', 'pull', gh, '%s:%s' % (i['branch'], branch)])
+                    #print "git reset %s --hard" % i['sha1'][0:9]
+                    call(['git', 'reset', '--hard', i['sha1'][0:9]])
+                    print "Pull Complete:"
+                    print "Lint all: git yui lint build/%s/*.js src/%s/js/*" % (i['module'], i['module'])
+                    print "Reset back to master: git reset --hard master"
                     print '--------------------------------------------------------------------------'
                     
         else:
