@@ -670,6 +670,7 @@ def copy(content):
 def createComponent(name):
     checkBuilder()
     src_path = os.path.abspath(os.path.join(git_dir, 'src', name))
+    b_path = os.path.abspath(os.path.join(git_dir, 'build', name))
     if os.path.exists(src_path):
         print_error("Path exists, can not create:\n%s" % src_path)
     print bold('Creating new module: %s' % name)
@@ -701,6 +702,7 @@ def createComponent(name):
     build_xml_final = os.path.abspath(os.path.join(src_path, 'build.xml'))
     
     #Do all the work
+    os.mkdir(b_path)
     os.mkdir(src_path)
     os.mkdir(js_path)
     os.mkdir(test_path)
