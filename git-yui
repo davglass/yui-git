@@ -362,32 +362,13 @@ def showNetwork():
     list = member_list
     list.sort()
     ##This need to move to an API call on yuilibrary.com
-    contribs = [
-        'davglass',
-        'msweeney',
-        'miraglia',
-        'nzakas',
-        'apm',
-        'jlecomte',
-        'lsmith',
-        'jenny',
-        'sdesai',
-        'kloots',
-        'g13n',
-        'mlinac',
-        'gmoothart',
-        'emergence',
-        'ebi',
-        'Satyam',
-        'bluesmoon',
-        'caridy',
-        'cgriego',
-        'foxxtrot'
-    ]
+    url = "%s/gallery/api/forks" % (server_name)
+    data = simplejson.load(urllib.urlopen(url))
+    contribs = data['results']
     contribs.sort()
     print bold("List of forks for: %s" % origin)
     print "Known contributors are bolded and marked with an *"
-    print bold('yui')
+    print bold('yui*')
     for i in contribs:
         if i in list:
             print bold("%s*" % i)
@@ -442,9 +423,7 @@ def showGalleryPending(id):
 
                     if not remote_name in git_config:
                         #call(['git', 'remote', 'add', gh, 'git://github.com/%s/%s.git' % (gh, master)])
-                        #print "git remote add %s git://github.com/%s/yui3-gallery.git" % (gh, gh)
-                        #Change when gallery is live!!
-                        print "git remote add %s git@github.com:%s/yui3-gallery.git" % (gh, gh)
+                        print "git remote add %s git://github.com/%s/yui3-gallery.git" % (gh, gh)
                     branch = "pending-%s" % i['sha1'][0:9]
                     #print "git checkout -b %s" % branch
                     call(['git', 'checkout', '-b', branch])
