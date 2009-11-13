@@ -661,13 +661,18 @@ def copy(content):
 ##Creates the directory structure for a new module
 def createComponent(name):
     checkBuilder()
+    origin = globals()['origin']
+
+    if origin == 'yui3-gallery':
+        if name[0:8] != 'gallery-':
+            name = "gallery-%s" % name
+
     src_path = os.path.abspath(os.path.join(git_dir, 'src', name))
     b_path = os.path.abspath(os.path.join(git_dir, 'build', name))
     if os.path.exists(src_path):
         print_error("Path exists, can not create:\n%s" % src_path)
     print bold('Creating new module: %s' % name)
     
-    origin = globals()['origin']
 
     #Sand box
     if origin == 'yui3-gallery':
