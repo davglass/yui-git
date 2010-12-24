@@ -703,7 +703,7 @@ def createComponent(name):
     os.mkdir(src_path)
     os.mkdir(js_path)
     os.mkdir(test_path)
-    os.mkdir(sbox_path)
+    os.makedirs(sbox_path)
 
     open(src_readme, 'w').close()
     open(sbox_readme, 'w').close()
