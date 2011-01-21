@@ -392,6 +392,22 @@ def showCommits(num, user):
     ]
     call(args)
 
+def getUserGalleryModules():
+    try:
+        username = git_config['yui.user']
+        token = git_config['yui.token']
+    except KeyError:
+        print_error("No YUI username or token in your git config.\nhttp:://wiki.github.com/davglass/yui-git-yui-api-token")
+
+    url = "%s/gallery/api/user/%s" % ( server_name, username )
+    req = urllib2.Request(url)
+    data = simplejson.load(urllib2.urlopen(req))
+
+    items = []
+    for module in data["modules"]:
+        items.append("gallery-" + module["module"])
+    return items
+
 def showGalleryPending(id):
     print bold('Gallery Pending Items')
 
@@ -757,6 +773,8 @@ def showHelp(item=None):
     formatHelp("build all", "Run the build on all dir's in src%s" % bold(red('*')))
     formatHelp("docs [control1] [control2]", "Build the API docs for the specified modules%s" % bold(red('*')))
     formatHelp("docs all", "Build the API docs for all modules%s" % bold(red('*')))
+    if origin == "yui3-gallery":
+        formatHelp("docs my", "Build the API docs for gallery modules owned by you%s" % bold(red('*'))) 
     formatHelp("lint [path-to-file] [path-to-file] [path-to-file]", "Run JSLint on the supplied files%s" % bold(red('*')))
     formatHelp("network|users|forks", "Show the list of forks for this project")
     formatHelp("commits [nn] [email-address]", "Shows the last [nn] commits by user. default: 5 and you")
@@ -842,7 +860,10 @@ elif action == 'docs' or action == 'doc':
     #if origin != 'yui2' and origin != 'yui3':
     if not origin in supported_builds:
         print_error('Not supported on this project')
-    if count > 2:
+    if origin == 'yui3-gallery' and args[1] == 'mine':
+        items = getUserGalleryModules()
+        buildDocs(items)
+    elif count > 2:
         items = []
         for k,v in enumerate(args):
             if k > 0:
